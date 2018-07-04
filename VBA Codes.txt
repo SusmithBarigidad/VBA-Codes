@@ -1,0 +1,552 @@
+Sub Shortage_Macro()
+
+' Author: Derek Voreis
+' Date: 2/20/18
+'----------------------------------------------------------------------------------------------
+    Application.ScreenUpdating = False
+    Application.DisplayStatusBar = False
+    ActiveSheet.DisplayPageBreaks = False
+'----------------------------------------------------------------------------------------------
+
+    Dim wkb1 As Workbook
+    Dim sht1 As Worksheet
+    Set wkb1 = ActiveWorkbook
+    Set sht1 = wkb1.Sheets("sheet1")
+    
+    Dim lastrow As Long
+    lastrow = sht1.Range("a" & Rows.Count).End(xlUp).Row
+'----------------------------------------------------------------------------------------------
+'Add/Remove Columns
+
+    [b1:f1].EntireColumn.Insert
+    [l1].EntireColumn.Insert
+    [aa1:ad1].EntireColumn.Insert
+    [ag1:as1].EntireColumn.Insert
+    [au1].EntireColumn.Delete
+    
+'----------------------------------------------------------------------------------------------
+'Name Headers
+
+    [b1] = "ID1": [c1] = "STATUS": [d1] = "FAMILY"
+    [e1] = "T" & Chr(10) & "Y" & Chr(10) & "P" & Chr(10) & "E"
+    [f1] = "P" & Chr(10) & "O" & Chr(10) & "M"
+    [i1] = "SO": [j1] = "Li.": [k1] = "BEN": [l1] = "Unique BEN for SW/PF": [m1] = "WO": [n1] = "OP"
+    [o1] = "M" & Chr(10) & "F" & Chr(10) & "G"
+    [r1] = "DESC.": [s1] = "QTY": [t1] = "Due Dt."
+    [u1] = "S" & Chr(10) & "U" & Chr(10) & "P"
+    [v1] = "PO": [w1] = "PO Li.": [x1] = "PO Li #"
+    [y1] = "LT": [z1] = "MRP Need Dt."
+    [aa1] = "Plan Launch Dt."
+    [ab1] = "GAP - " & Chr(10) & "L" & Chr(10) & "A" & Chr(10) & "U" & Chr(10) & "N" & Chr(10) & "C" & Chr(10) & "H"
+    [ac1] = "WO Finish Dt."
+    [ad1] = "Pre Fac Ship Dt."
+    [ae1] = "MHD"
+    [af1] = "MCSD"
+    [ag1] = "GAP - " & Chr(10) & "M" & Chr(10) & "C" & Chr(10) & "S" & Chr(10) & "D"
+    [ah1] = "A" & Chr(10) & "C" & Chr(10) & "T" & Chr(10) & "I" & Chr(10) & "O" & Chr(10) & "N"
+    [ai1] = "ACTION OWNER"
+    [aj1] = "ROOT CAUSE"
+    [ak1] = "PC COMMENTS"
+    [al1] = "Purchasing/Supply Chain Comments"
+    [am1] = "CC1"
+    [an1] = "CC2"
+    [ao1] = "# to Cover"
+    [ap1] = "1" & Chr(10) & "9" & Chr(10) & "0" & Chr(10) & "0"
+    [aq1] = "0" & Chr(10) & "2" & Chr(10) & "9" & Chr(10) & "1"
+    [ar1] = "2" & Chr(10) & "0" & Chr(10) & "0" & Chr(10) & "0"
+    [as1] = "W" & Chr(10) & "W"
+    [at1] = "M" & Chr(10) & "R" & Chr(10) & "B"
+    [ax1] = "BUYER"
+    [bh1] = "MCSD < 11 Days"
+    
+    '----------------------------------------------------------------------------------------------
+'Fix Numbers Read as Text Error
+    
+    [a:a].TextToColumns: [h:h].TextToColumns: [i:i].TextToColumns
+    [j:j].TextToColumns: [m:m].TextToColumns: [p:p].TextToColumns
+    [v:v].TextToColumns
+    
+'----------------------------------------------------------------------------------------------
+    
+    [p:p].NumberFormat = "m/d/yy;@"
+    [s:s].NumberFormat = "0"
+    [t:t].NumberFormat = "m/d/yy;@"
+    [x:x].NumberFormat = "0"
+    [z:z].NumberFormat = "m/d/yy;@"
+    [aa:aa].NumberFormat = "m/d/yy;@"
+    [ab:ab].NumberFormat = "0"
+    [ac:af].NumberFormat = "m/d/yy;@"
+    [ag:ag].NumberFormat = "0"
+    [ah:ai].NumberFormat = "general"
+    [ao:at].NumberFormat = "0"
+'----------------------------------------------------------------------------------------------
+'Filter by blank supply dates and add dates based on formula. If supply due date is blank but GR/U1/IN then Today, if PR/PO 9/1/18
+    
+    On Error Resume Next
+    
+        Range("a1:bh" & lastrow).AutoFilter Field:=20, Criteria1:="="
+        With Range("t2:t" & lastrow).SpecialCells(xlCellTypeVisible)
+        .FormulaR1C1 = "=IF(OR(RC[1]=""GR"",RC[1]=""IN"",RC[1]=""U1""),""QOH"",IF(OR(RC[1]=""PO"",RC[1]=""PR""),""PR"",""""))"
+        End With
+        ActiveSheet.ShowAllData
+    'Keep Values
+        Range("t2:t" & lastrow).Value = Range("t2:t" & lastrow).Value
+    
+    On Error GoTo 0
+'----------------------------------------------------------------------------------------------
+'Open MPS for LPR Info
+
+    Dim wkb2 As Workbook
+    Dim sht2 As Worksheet
+    Set wkb2 = Workbooks.Open("\\zaphod\shared3\Planning\WIP_REPORT BY FAMILY\DEP Planning\DEP_Planning_MPS_File.xlsx")
+    Set sht2 = wkb2.Sheets("Sheet1")
+    Dim MPSlastrow As Long
+    MPSlastrow = sht2.Range("b" & Rows.Count).End(xlUp).Row
+    sht2.Activate
+    
+    'Sort MPS by SYS level at top for Family Lookups
+
+     With ActiveWorkbook.Worksheets("sheet1").Sort
+        .SortFields.Add Key:=Range("m2:m" & MPSlastrow), SortOn:=xlSortOnValues, Order:=xlAscending, CustomOrder:="SYS,PM,GB,SA", DataOption:=xlSortNormal
+        .SetRange Range("A1:Ao" & MPSlastrow)
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    
+'Go back to Shortage Report
+    
+    sht1.Activate
+    Dim lastrow2 As Long
+    lastrow2 = sht1.Range("a" & Rows.Count).End(xlUp).Row
+    
+'Lookups for LPR info
+
+    Range("d2:d" & lastrow2).FormulaR1C1 = "=OFFSET(INDEX([DEP_Planning_MPS_File.xlsx]Sheet1!C3,MATCH(RC[4],[DEP_Planning_MPS_File.xlsx]Sheet1!C3,0)),0,-1)"
+    Range("e2:e" & lastrow2).FormulaR1C1 = "=OFFSET(INDEX([DEP_Planning_MPS_File.xlsx]Sheet1!C10,MATCH(RC[6],[DEP_Planning_MPS_File.xlsx]Sheet1!C10,0)),0,3)"
+    Range("f2:f" & lastrow2).FormulaR1C1 = "=OFFSET(INDEX([DEP_Planning_MPS_File.xlsx]Sheet1!C10,MATCH(RC[5],[DEP_Planning_MPS_File.xlsx]Sheet1!C10,0)),0,4)"
+    Range("aa2:aa" & lastrow2).FormulaR1C1 = "=OFFSET(INDEX([DEP_Planning_MPS_File.xlsx]Sheet1!C10,MATCH(RC[-16],[DEP_Planning_MPS_File.xlsx]Sheet1!C10,0)),0,12)"
+    
+'Keep Values
+
+    Range("d2:f" & lastrow2).Value = Range("d2:f" & lastrow2).Value
+    Range("aa2:aa" & lastrow2).Value = Range("aa2:aa" & lastrow2).Value
+    
+    'close MPS
+    wkb2.Close savechanges:=False
+    sht1.Activate
+    
+'----------------------------------------------------------------------------------------------
+'Formula for GAPs
+
+On Error Resume Next
+    
+    Range("ab2:ab" & lastrow2).FormulaR1C1 = "=RC[-1]-RC[-8]"
+    Range("ag2:ag" & lastrow2).FormulaR1C1 = "=RC[-1]-RC[-13]"
+    
+    Range("a1:bh" & lastrow2).AutoFilter Field:=20, Criteria1:="PR"
+    With Range("ab2:ab" & lastrow2).SpecialCells(xlCellTypeVisible)
+    .FormulaR1C1 = "99"
+    End With
+    With Range("ag2:ag" & lastrow2).SpecialCells(xlCellTypeVisible)
+    .FormulaR1C1 = "99"
+    End With
+    
+    ActiveSheet.ShowAllData
+    
+    Range("a1:bh" & lastrow2).AutoFilter Field:=20, Criteria1:="QOH"
+    With Range("ab2:ab" & lastrow2).SpecialCells(xlCellTypeVisible)
+    .FormulaR1C1 = "0"
+    End With
+    With Range("ag2:ag" & lastrow2).SpecialCells(xlCellTypeVisible)
+    .FormulaR1C1 = "0"
+    End With
+
+    ActiveSheet.ShowAllData
+    
+    Range("ab2:ab" & lastrow2).Value = Range("ab2:ab" & lastrow2).Value
+    Range("ag2:ag" & lastrow2).Value = Range("ag2:ag" & lastrow2).Value
+    
+    On Error GoTo 0
+'----------------------------------------------------------------------------------------------
+'Formula to determine shortage status
+
+    Range("c2:c" & lastrow2).FormulaR1C1 = "=IF(OR(RC[18]=""PR"",RC[45]=""None"",RC[17]=""PR""),""PR"",IF(OR(RC[18]=""GR"",RC[18]=""u1"",RC[18]=""in""),""QOH"",IF(AND(NOT(RC[17]=""""),RC[17]<TODAY()),""Past Due"",IF(AND(NOT(RC[17]=""""),RC[23]-RC[17]>=0),""On Time"",IF(RC[29]-RC[17]>3,""Late"",IF(AND(RC[29]-RC[17]<4,RC[29]-RC[17]>0),""< 3 Days from MCSD"",IF(RC[29]-RC[17]<1,""Missing MCSD"")))))))"
+    Range("c2:c" & lastrow2).Value = Range("c2:c" & lastrow2).Value
+
+'----------------------------------------------------------------------------------------------
+'Open Template to lookup previous day comments
+    
+    Dim wkb3 As Workbook
+    Dim sht3 As Worksheet
+    Set wkb3 = Workbooks.Open("\\zaphod\shared3\Planning\WIP_REPORT BY FAMILY\DEP Planning\Shortage_template.xlsx")
+    Set sht3 = wkb3.Sheets("Sheet1")
+    
+    sht1.Activate
+    
+    Range("ah2:ah" & lastrow2).FormulaR1C1 = "=OFFSET(INDEX([Shortage_template.xlsx]Sheet1!C1,MATCH(RC[-33],[Shortage_template.xlsx]Sheet1!C1,0)),0,33)"
+    Range("ai2:ai" & lastrow2).FormulaR1C1 = "=OFFSET(INDEX([Shortage_template.xlsx]Sheet1!C1,MATCH(RC[-34],[Shortage_template.xlsx]Sheet1!C1,0)),0,34)"
+    Range("aj2:aj" & lastrow2).FormulaR1C1 = "=OFFSET(INDEX([Shortage_template.xlsx]Sheet1!C1,MATCH(RC[-35],[Shortage_template.xlsx]Sheet1!C1,0)),0,35)"
+    Range("ak2:ak" & lastrow2).FormulaR1C1 = "=OFFSET(INDEX([Shortage_template.xlsx]Sheet1!C1,MATCH(RC[-36],[Shortage_template.xlsx]Sheet1!C1,0)),0,36)"
+    Range("al2:al" & lastrow2).FormulaR1C1 = "=OFFSET(INDEX([Shortage_template.xlsx]Sheet1!C1,MATCH(RC[-37],[Shortage_template.xlsx]Sheet1!C1,0)),0,37)"
+    
+    Range("ah2:al" & lastrow2).Value = Range("ah2:al" & lastrow2).Value
+    
+'----------------------------------------------------------------------------------------------
+'Add List for Action
+
+    With Range("ah2:ah" & lastrow2).Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _
+        xlBetween, Formula1:="Escalate,STO,RWK,PEG,Buyer,SDW,291,WHS,PBKO,SDW,DEP-570SW"
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .InputTitle = ""
+        .ErrorTitle = ""
+        .InputMessage = ""
+        .ErrorMessage = ""
+        .ShowInput = True
+        .ShowError = True
+        End With
+    
+'----------------------------------------------------------------------------------------------
+'Shorten Family name
+
+    With Range("d2:d" & lastrow2)
+    .Replace What:="VECTOR EXTREME", Replacement:="VXT", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    .Replace What:="VECTOR EXCEL", Replacement:="VXL", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    .Replace What:="DEP UPGRADES", Replacement:="UPG", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    .Replace What:="VECTOR EXPRESS", Replacement:="VXP", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=False
+    End With
+
+'----------------------------------------------------------------------------------------------
+'Add formula to allow filtering by relative range to within 10 days to MCSD
+
+    Range("bh2:bh" & lastrow2).FormulaR1C1 = "=IF(RC[-28]<TODAY()+15,""YES"",""NO"")"
+    Range("bh2:bh" & lastrow2).Value = Range("bh2:bh" & lastrow2).Value
+
+'----------------------------------------------------------------------------------------------
+'Fix #N/A Values for SW/PF
+    
+    Range("A1:bh1" & lastrow2).AutoFilter
+    ActiveSheet.Range("A1:bh1" & lastrow2).AutoFilter Field:=5, Criteria1:="#N/A", Operator:=xlFilterValues
+    
+    With Range("e2:e" & lastrow2).SpecialCells(xlCellTypeVisible)
+    .FormulaR1C1 = "=IF(RC[51]=""655"",""PF"",IF(OR(RC[51]=""651"",RC[51]=""641""),""SW"",""""))"
+    End With
+    
+    ActiveSheet.ShowAllData
+    Range("e2:e" & lastrow2).Value = Range("e2:e" & lastrow2).Value
+    
+'----------------------------------------------------------------------------------------------
+'Header Color and font/size
+
+     With Range("a1:bh1")
+    .Font.Name = "calibri"
+    .Font.Size = 10
+    .Font.Color = RGB(255, 255, 255)
+    .Font.Bold = True
+    .VerticalAlignment = xlTop
+    .WrapText = True
+    End With
+    
+    [ac1:ad1].Font.Size = 7
+    [ae1].Font.Size = 9
+
+     Range("a1:bh1").Interior.Color = RGB(84, 132, 154)
+     Range("t1").Interior.Color = RGB(234, 99, 18)
+     Range("aa1").Interior.Color = RGB(234, 99, 18)
+     Range("af1").Interior.Color = RGB(234, 99, 18)
+     Range("ah1:ai1").Interior.Color = RGB(158, 94, 155)
+     Range("aj1").Interior.Color = RGB(237, 88, 44)
+     Range("ak1").Interior.Color = RGB(106, 172, 144)
+     Range("al1").Interior.Color = RGB(91, 155, 213)
+'----------------------------------------------------------------------------------------------
+'Body Font & Color
+
+    With Range("a2:bh" & lastrow2)
+    .Font.Name = "Calibri"
+    .Font.Size = 8
+    End With
+
+    Range("t2:t" & lastrow2).Interior.Color = RGB(250, 240, 211)
+    Range("aa2:aa" & lastrow2).Interior.Color = RGB(250, 240, 211)
+    Range("af2:af" & lastrow2).Interior.Color = RGB(250, 240, 211)
+    
+ '----------------------------------------------------------------------------------------------
+ 'Alignment
+    
+    Rows(1).RowHeight = 67.5
+    Range("a2:ah" & lastrow2).RowHeight = 14
+    
+    [c:c].ColumnWidth = 9.5
+    [e:f,j:j,j:j,l:l,s:s,ab:ab,ag:ag].ColumnWidth = 3
+    [a:b,d:f,n:o,x:x,u:u,au:av].ColumnWidth = 3.5
+    [h:h,g:g,p:p,t:t,z:aa,ac:af].ColumnWidth = 6.5
+    [w:y,am:at].ColumnWidth = 2
+    [k:k].EntireColumn.AutoFit
+    [m:m].ColumnWidth = 7
+    [q:r,aw:ay].ColumnWidth = 12
+    [az:bc].ColumnWidth = 10
+    [ah:ah,bd:bh].ColumnWidth = 4
+    [i:i,ai:ai].ColumnWidth = 5
+    [v:v].ColumnWidth = 9
+    
+    [d:f,h:k,m:p,s:u,z:ag,ao:at].HorizontalAlignment = xlCenter
+    [v:y,ah:an].HorizontalAlignment = xlLeft
+    [aj:al].VerticalAlignment = xlTop
+    
+    [a:b,l:l,z:z,v:x,ac:ae,am:an].EntireColumn.Hidden = True
+    
+'----------------------------------------------------------------------------------------------
+'conditional formatting
+'Status
+
+    'conditional formatting
+'Status
+        With Range("c2:c" & lastrow2).FormatConditions
+            .Add Type:=xlExpression, Formula1:="=$c2=""Late"""
+            With .Item(.Count).Interior
+                .Color = RGB(255, 192, 0)
+            End With
+            .Add Type:=xlExpression, Formula1:="=$c2=""QOH"""
+            With .Item(.Count).Interior
+                .Color = RGB(146, 208, 80)
+            End With
+            .Add Type:=xlExpression, Formula1:="=$c2=""On Time"""
+            With .Item(.Count).Interior
+                .Color = RGB(146, 208, 80)
+            End With
+            .Add Type:=xlExpression, Formula1:="=$c2=""Missing MCSD"""
+            With .Item(.Count).Interior
+                .Color = RGB(255, 0, 0)
+            End With
+            With .Item(.Count).Font
+                .Color = RGB(255, 255, 255)
+            End With
+            .Add Type:=xlExpression, Formula1:="=$c2=""< 3 Days from MCSD"""
+            With .Item(.Count).Interior
+            .Color = RGB(128, 0, 0)
+            End With
+            With .Item(.Count).Font
+                .Color = RGB(255, 255, 255)
+            End With
+            .Add Type:=xlExpression, Formula1:="=$c2=""Past Due"""
+            With .Item(.Count).Interior
+                .Color = RGB(217, 217, 217)
+            End With
+            With .Item(.Count).Font
+                .Color = RGB(255, 0, 0)
+            End With
+            .Add Type:=xlExpression, Formula1:="=$c2=""PR"""
+            With .Item(.Count).Interior
+                .Color = RGB(255, 0, 0)
+                End With
+                With .Item(.Count).Font
+                .Color = RGB(255, 255, 0)
+            End With
+        End With
+
+'Crated Tools
+        With Range("o2:o" & lastrow2).FormatConditions
+            .Add Type:=xlExpression, Formula1:="=$o2=""CRT"""
+            With .Item(.Count).Interior
+            .Color = RGB(251, 255, 201)
+            End With
+        End With
+        
+'Past Due PO's
+        With Range("t2:t" & lastrow2).FormatConditions
+            .Add Type:=xlExpression, Formula1:="=$t2<today()"
+            With .Item(.Count).Font
+            .Color = RGB(255, 0, 0)
+            End With
+        End With
+
+'MRB
+        With Range("at2:at" & lastrow2).FormatConditions
+            .Add Type:=xlExpression, Formula1:="=$at2>0"
+            With .Item(.Count).Font
+            .Color = RGB(255, 255, 255)
+            End With
+            With .Item(.Count).Interior
+            .Color = RGB(255, 0, 0)
+            End With
+        End With
+    
+'----------------------------------------------------------------------------------------------
+'sort 1.MCSD, 2.Plan launch, 3. FCID, 4. Due date.
+    
+    With ActiveWorkbook.Worksheets("sheet1").Sort
+    .SortFields.Clear
+    .SortFields.Add Key:=Range("af2:af" & lastrow2), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    .SortFields.Add Key:=Range("aa2:aa" & lastrow2), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    .SortFields.Add Key:=Range("h2:h" & lastrow2), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    .SortFields.Add Key:=Range("t2:t" & lastrow2), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    .SetRange Range("a1:bh1" & lastrow2)
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    
+'----------------------------------------------------------------------------------------------
+
+'Make WB Shared
+
+    If Not ActiveWorkbook.MultiUserEditing Then
+        Application.DisplayAlerts = False
+        ActiveWorkbook.SaveAs ActiveWorkbook.Name, accessmode:=xlShared
+        End If
+'----------------------------------------------------------------------------------------------
+
+'Close Template
+
+    wkb3.Close savechanges:=False
+    
+'----------------------------------------------------------------------------------------------
+
+    Application.ScreenUpdating = True
+    Application.DisplayStatusBar = True
+    Application.DisplayAlerts = True
+    
+End Sub
+
+Sub Filter_Dry_Core()
+
+    Application.ScreenUpdating = False
+    Dim lastrow2 As Long
+    lastrow2 = Range("A" & Rows.Count).End(xlUp).Row
+
+    Range("A1:bh1" & lastrow2).AutoFilter
+    ActiveSheet.Range("A1:bh1" & lastrow2).AutoFilter Field:=6, Criteria1:=Array("305", "307", "310", "328", "329"), Operator:=xlFilterValues
+    ActiveSheet.Range("A1:bh1" & lastrow2).AutoFilter Field:=15, Criteria1:="<>"
+    
+    [n:p].EntireColumn.Hidden = False
+    [aa:ab].EntireColumn.Hidden = False
+    
+    [ac:ae].EntireColumn.Hidden = True
+    [v:v].EntireColumn.Hidden = True
+    
+    
+    Application.ScreenUpdating = True
+
+End Sub
+
+   Sub FILTER_WET_CORE()
+'----------------------------------------------------------------------------------------------
+' Filter by WET POMs - Tools in WIP
+
+    Application.ScreenUpdating = False
+    
+    Dim lastrow2 As Long
+    lastrow2 = Range("A" & Rows.Count).End(xlUp).Row
+    
+    Range("A1:bh1" & lastrow2).AutoFilter
+    ActiveSheet.Range("A1:bh1" & lastrow2).AutoFilter Field:=6, Criteria1:=Array("306", "316"), Operator:=xlFilterValues
+    ActiveSheet.Range("A1:bh1" & lastrow2).AutoFilter Field:=15, Criteria1:="<>"
+
+    [n:p].EntireColumn.Hidden = False
+    [aa:ab].EntireColumn.Hidden = False
+    
+    [ac:ae].EntireColumn.Hidden = True
+    [v:v].EntireColumn.Hidden = True
+    
+    Application.ScreenUpdating = True
+    
+    End Sub
+
+Sub FILTER_UPGRADES()
+
+    Application.ScreenUpdating = False
+    Dim lastrow2 As Long
+    lastrow2 = Range("A" & Rows.Count).End(xlUp).Row
+    
+    Range("A1:bh1" & lastrow2).AutoFilter
+    ActiveSheet.Range("A1:bh1" & lastrow2).AutoFilter Field:=6, Criteria1:=Array("311"), Operator:=xlFilterValues
+    
+    [n:n,p:p].EntireColumn.Hidden = False
+    [v:x,h:h,o:o].EntireColumn.Hidden = True
+    [z:ab].EntireColumn.Hidden = True
+
+    Application.ScreenUpdating = True
+    
+    End Sub
+    
+    Sub Filter_SDW_RISK_14_Days()
+    
+    Application.ScreenUpdating = False
+    Dim lastrow2 As Long
+    lastrow2 = Range("A" & Rows.Count).End(xlUp).Row
+    
+    Range("A1:bh1" & lastrow2).AutoFilter
+    ActiveSheet.Range("A1:bh1" & lastrow2).AutoFilter Field:=60, Criteria1:=Array("YES"), Operator:=xlFilterValues
+    ActiveSheet.Range("A1:bh1" & lastrow2).AutoFilter Field:=3, Criteria1:="<>QOH", Operator:=xlFilterValues
+    ActiveSheet.Range("A1:bh1" & lastrow2).AutoFilter Field:=21, Criteria1:=Array("PO", "PR"), Operator:=xlFilterValues
+    'ActiveSheet.Range("A1:bd1" & lastrow2).AutoFilter Field:=21, Criteria1:="<>PA", Operator:=xlFilterValues
+    ActiveSheet.Range("A1:bd1" & lastrow2).AutoFilter Field:=8, Criteria1:="<>", Operator:=xlFilterValues
+    ActiveSheet.Range("A1:bd1" & lastrow2).AutoFilter Field:=11, Criteria1:="<>", Operator:=xlFilterValues
+    
+    [h1].EntireColumn.Hidden = False
+    [o:p].EntireColumn.Hidden = True
+    [v:x].EntireColumn.Hidden = False
+   
+    [z:ad].EntireColumn.Hidden = True
+    [n:n].EntireColumn.Hidden = True
+    
+    Application.ScreenUpdating = True
+
+End Sub
+
+Sub Filter_MRPCC_655()
+    
+    Application.ScreenUpdating = False
+    Dim lastrow2 As Long
+    lastrow2 = Range("A" & Rows.Count).End(xlUp).Row
+    
+    Range("A1:bh1" & lastrow2).AutoFilter
+    ActiveSheet.Range("A1:bh1" & lastrow2).AutoFilter Field:=56, Criteria1:=Array("655"), Operator:=xlFilterValues
+    
+    [n:p,w:x,h:h].EntireColumn.Hidden = True
+    [z:ad].EntireColumn.Hidden = True
+    [f:f].EntireColumn.Hidden = False
+    
+    Application.ScreenUpdating = True
+    
+    End Sub
+    
+    Sub Filter_MRPCC_651()
+    
+    Application.ScreenUpdating = False
+    Dim lastrow2 As Long
+    lastrow2 = Range("A" & Rows.Count).End(xlUp).Row
+    
+    Range("A1:bh1" & lastrow2).AutoFilter
+    ActiveSheet.Range("A1:bh1" & lastrow2).AutoFilter Field:=56, Criteria1:=Array("651"), Operator:=xlFilterValues
+    
+    [n:p,w:x,h:h].EntireColumn.Hidden = True
+    [z:ad].EntireColumn.Hidden = True
+    [f:f].EntireColumn.Hidden = False
+    
+    Application.ScreenUpdating = True
+    
+    End Sub
+    
+    Sub Filter_MRPCC_641()
+    
+    Application.ScreenUpdating = False
+    Dim lastrow2 As Long
+    lastrow2 = Range("A" & Rows.Count).End(xlUp).Row
+    
+    Range("A1:bh1" & lastrow2).AutoFilter
+    ActiveSheet.Range("A1:bh1" & lastrow2).AutoFilter Field:=56, Criteria1:=Array("641"), Operator:=xlFilterValues
+    
+    [n:p,w:x,h:h].EntireColumn.Hidden = True
+    [z:ad].EntireColumn.Hidden = True
+    [f:f].EntireColumn.Hidden = False
+    Application.ScreenUpdating = True
+    
+    End Sub
