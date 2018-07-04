@@ -1,7 +1,6 @@
 Sub Shortage_Macro()
 
-' Author: Derek Voreis
-' Date: 2/20/18
+
 '----------------------------------------------------------------------------------------------
     Application.ScreenUpdating = False
     Application.DisplayStatusBar = False
