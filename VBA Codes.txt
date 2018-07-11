@@ -549,3 +549,98 @@ Sub Filter_MRPCC_655()
     Application.ScreenUpdating = True
     
     End Sub
+
+
+Sub Formatting()
+'
+'
+
+
+'Refresh Macro
+'
+
+'
+    'ActiveWorkbook.RefreshAll
+        
+'******************************************************
+    Application.ScreenUpdating = False
+    Application.DisplayStatusBar = False
+    ActiveSheet.DisplayPageBreaks = False
+'******************************************************
+  
+  'Formating
+  
+    [e:g].NumberFormat = "0"
+    [q:q].NumberFormat = "0"
+    [r:r].NumberFormat = "0"
+    [s:s].NumberFormat = "0"
+    [u:u].NumberFormat = "0"
+    [x:x].NumberFormat = "0"
+    [y:y].NumberFormat = "0"
+    [d:d].NumberFormat = "@"
+    [h:p].NumberFormat = "@"
+    [t:t,v:w,ai:ai,ak:ak,al:al,am:am].NumberFormat = "@"
+  
+  'Sorting
+  Dim lastrow2 As Long
+    lastrow2 = Sheets(1).Range("a" & Rows.Count).End(xlUp).Row
+With ActiveWorkbook.Worksheets("WIP_Planning").Sort
+    .SortFields.Clear
+    .SortFields.Add Key:=Range("a2:a" & lastrow2), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    .SortFields.Add Key:=Range("e2:e" & lastrow2), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    .SortFields.Add Key:=Range("t2:t" & lastrow2), SortOn:=xlSortOnValues, Order:=xlAscending, CustomOrder:="SYS,PM,UP,SW,PF,SA,GB,ATM,VTM", DataOption:=xlSortNormal
+    .SortFields.Add Key:=Range("g2:g" & lastrow2), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+    .SortFields.Add Key:=Range("w2:w" & lastrow2), SortOn:=xlSortOnValues, Order:=xlDescending, DataOption:=xlSortNormal
+    .SetRange Range("a1:am1" & lastrow2)
+        .Header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+
+    
+ 'Alignment
+    [a:a,b:b,c:c,x:x,y:y,z:z,aa:aa,ab:ab,ac:ac,ad:ad,ae:ae,af:af,ag:ag,ah:ah].ColumnWidth = 8
+    [d:d,n:n,o:o,v:v,am:am].ColumnWidth = 13
+    [e:e,h:h,aj:aj,ak:ak,al:al].ColumnWidth = 7
+    [f:f].ColumnWidth = 6
+    [g:g].ColumnWidth = 4.5
+    [i:i,j:j,m:m].ColumnWidth = 11
+    [k:k,l:l,q:q].ColumnWidth = 3
+    [p:p,r:r,s:s,t:t,u:u,ai:ai].ColumnWidth = 4
+    [w:w].ColumnWidth = 9
+    [a:c,e:g,k:l,p:z,aa:ah].HorizontalAlignment = xlCenter
+    [d:d,h:h,i:i,j:j,m:o,v:v,w:w,ai:ai,aj:aj,al:al,am:am].HorizontalAlignment = xlLeft
+       
+ 'Table Styles
+  Sheets(1).Cells.Interior.Color = xlNone 'Removing all colors beforehand
+  ActiveSheet.ListObjects("Query2").tablestyle = "TableStyleLight9"
+ 'Highlighting rows where type = sys
+Dim LR As Long, FR As Long
+
+FP = 1
+Dim Type1 As String
+Dim j As Long
+LP = Range("T" & Rows.Count).End(xlUp).Row
+For j = FP To LP
+
+  Type1 = Range("T" & j)
+  
+  If Type1 = "SYS" Then
+  Rng = "A" & j & ":" & "AM" & j
+ Range(Rng).Interior.Color = RGB(191, 191, 191)
+  
+  End If
+Next
+       
+'*******************************************************
+    Application.ScreenUpdating = True
+    Application.DisplayStatusBar = True
+    Application.DisplayAlerts = True
+'*******************************************************
+       
+    
+    
+    
+End Sub
