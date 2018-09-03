@@ -1,0 +1,117 @@
+Dim dbVMFG As ADODB.Connection
+
+Sub GetData()
+
+  Application.ScreenUpdating = False
+
+
+Dim intResult As Integer
+Dim sql As String
+Dim ws As Worksheet
+Dim count As Integer
+
+'Initailization of the DB connection and Recordset Object
+Set dbVMFG = New ADODB.Connection
+Dim snpData As ADODB.Recordset
+Set snpData = New ADODB.Recordset
+
+dbVMFG.ConnectionString = "ODBC;SERVERNODE={pdtcaxphsa01:30015};DSN=AXP-HANA;;"
+dbVMFG.ConnectionTimeout = 40
+dbVMFG.CursorLocation = adUseClient
+dbVMFG.Open
+
+'Checking whether if the connection is established. State = 1 - Connection Established State = 0 or -1 - Not Connected
+If (dbVMFG.State <> 1) Or (Err <> 0) Then
+    intResult = MsgBox(" Could not connect to the database. Check your user name and password." & vbCrLf & Error(Err), 16, "Excel Demo")
+Else
+
+' Query execute
+
+sql = Worksheets("Query").Range("B1").Value
+
+'MsgBox (sql)
+
+snpData.Open sql, dbVMFG
+'Application.Calculation = xlCalculationAutomatic
+ActiveWorkbook.Sheets("Result").Select
+Cells(2, 1).Select
+ActiveSheet.Range("A2:AZ1048576").Clear
+
+ 'Query has been successfully then State would be 1 else -1
+If snpData.State = 1 Then
+   
+'Copying the data from Record set to the excel
+ ActiveSheet.Range("A2").CopyFromRecordset snpData
+      
+'Recordset close
+ snpData.Close
+ 
+   Worksheets("Result").Select
+   Range("A2").Select
+  '      ActiveWorkbook.Save
+ '       ActiveWorkbook.Close
+        
+End If
+End If
+
+
+
+'
+' Refreshing Pivot Chart
+'
+
+'
+    Sheets(4).Activate
+    Range("A1").Select
+    ThisWorkbook.RefreshAll
+Worksheets("Result").Select
+   Range("A2").Select
+
+
+ Application.ScreenUpdating = True
+End Sub
+
+
+
+
+Sub Total_Occurances()
+
+
+
+Application.ScreenUpdating = False
+
+Sheets(4).Select
+Range("F3:J100000").Select
+Selection.ClearContents
+Range("F3").Value = "Total Occurences"
+Range("G3").Value = "Total SO"
+Range("H3").Value = "% Usage"
+Range("I3").Value = "BOM Key Date"
+ 'Range("F3:J100000").Select
+    'Selection.ClearContents
+' Counts the occurences by using for loop in the SO_Percent Sheet
+Dim LR As Long, i As Long
+LR = Sheets(4).Range("A" & Rows.count).End(xlUp).Row - 1
+For i = LR To 4 Step -1
+ SP = SP + 1
+  If Not IsEmpty(Range("B" & i).Value) And Range("B" & i).Value <> "Grand Total" Then
+   
+     Range("F" & i).Value = SP
+     Range("G" & i).Value = Sheets(1).Range("A" & Rows.count).End(xlUp).Row - 1
+     Range("H" & i).Value = (SP / (Sheets(1).Range("A" & Rows.count).End(xlUp).Row - 1)) * 100
+     Range("I" & i).Value = "=+VLOOKUP(C4,Result!B1:$O$1120,14,0)"
+     SP = 0
+  
+  End If
+  
+   
+Next i
+[H:H].NumberFormat = "?\%"
+[I:I].NumberFormat = "m/d/yyyy"
+Range("F3:I3").Select
+Selection.AutoFilter
+Application.ScreenUpdating = True
+    
+    
+End Sub
+
