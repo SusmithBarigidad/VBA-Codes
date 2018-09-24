@@ -1,0 +1,235 @@
+Calculated Column and Border
+
+Sub PBOM_Analysis()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+
+Dim wkb As Workbook
+Dim sht_1 As Worksheet
+Dim sht_2 As Worksheet
+    Set wkb = ActiveWorkbook
+    Set sht_1 = wkb.Sheets("ANALYSIS")
+    Set sht_2 = wkb.Sheets("PASTE RESULTS HERE")
+sht_2.Select
+Columns("B:B").Select
+        Selection.Delete Shift:=xlToLeft
+Columns("N:N").Select
+        Selection.Delete Shift:=xlToLeft
+Range("A1:N1").Value = [{"MATCH-CODE","NHA","NHA DESCRIPT.","COMPONANT","COMPONANT DESCRIPT.","Item","Qty","Unit","Matl Group","ProcType","SPT","Lead Time","Price","Ext Price"}]
+
+'FINDS EXTENDED PRICE
+Range("N2") = "=G2*M2"
+
+'FILLDOWN FORMULA
+    Range("N2:N" & Range("A" & Rows.Count).End(xlUp).Row).FillDown
+    
+    
+    Columns("D:E").Select
+    Selection.FormatConditions.Add Type:=xlExpression, Formula1:="=$A1 = ""O"""
+    Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+    With Selection.FormatConditions(1).Interior
+        .PatternColorIndex = xlAutomatic
+        .Color = 255
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).StopIfTrue = False
+    Selection.FormatConditions.Add Type:=xlExpression, Formula1:="=$A1 = ""P"""
+    Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+    With Selection.FormatConditions(1).Interior
+        .PatternColorIndex = xlAutomatic
+        .Color = 65535
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).StopIfTrue = False
+    Selection.FormatConditions.Add Type:=xlExpression, Formula1:="=$A1 = ""Z"""
+    Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+    With Selection.FormatConditions(1).Interior
+        .PatternColorIndex = xlAutomatic
+        .Color = 5296274
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).StopIfTrue = False
+    
+    Columns("M:M").Select
+    Selection.FormatConditions.Add Type:=xlExpression, Formula1:= _
+        "=AND(NOT($A1=""Z""),M1>2000)"
+    Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+    With Selection.FormatConditions(1).Interior
+        .PatternColorIndex = xlAutomatic
+        .Color = 255
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).StopIfTrue = False
+    
+    Columns("L:L").Select
+    Selection.FormatConditions.Add Type:=xlExpression, Formula1:= _
+        "=AND(NOT($A1=""Z""),L1>55)"
+    Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+    With Selection.FormatConditions(1).Interior
+        .PatternColorIndex = xlAutomatic
+        .Color = 255
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).StopIfTrue = False
+    
+        Range("A1:N1").Select
+    Range("N1").Activate
+    Selection.FormatConditions.Delete
+    
+    Range("A1:N1").Select
+    With Selection.Interior
+        .Pattern = xlSolid
+        .PatternColorIndex = xlAutomatic
+        .ThemeColor = xlThemeColorDark1
+        .TintAndShade = -0.349986266670736
+        .PatternTintAndShade = 0
+    End With
+        
+     ActiveSheet.UsedRange.Select
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlInsideVertical)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlInsideHorizontal)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    Range("A1:P1").Select
+    Range("P1").Activate
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlMedium
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlMedium
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlMedium
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlMedium
+    End With
+    With Selection.Borders(xlInsideVertical)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    Selection.Borders(xlInsideHorizontal).LineStyle = xlNone
+    
+    
+Range("O1").Value = "PRICE WEIGHTED ACCURACY"
+Range("P1") = "=SUMIF($A:$A,""Z"",$N:$N)/ (SUMIF($A:$A,""O"",$N:$N)+SUMIF($A:$A,""Z"",$N:$N))"
+'Range("P1").Value = Application.SumIf(Range("$A:$A"), "Z", Range("$N:$N")) / (Application.SumIf(Range("$A:$A"), "O", Range("$N:$N")) + Application.SumIf(Range("$A:$A"), "Z", Range("$N:$N")))
+Range("P1").NumberFormat = "0.00%"
+
+ Selection.Font.Bold = True
+    Range("O1:P1").Select
+    Range("P1").Activate
+    With Selection.Interior
+        .Pattern = xlSolid
+        .PatternColorIndex = xlAutomatic
+        .ThemeColor = xlThemeColorDark1
+        .TintAndShade = -0.349986266670736
+        .PatternTintAndShade = 0
+    End With
+    Selection.Font.Bold = True
+    
+    Range("P1").Select
+    Selection.FormatConditions.AddColorScale ColorScaleType:=3
+    Selection.FormatConditions(Selection.FormatConditions.Count).SetFirstPriority
+    Selection.FormatConditions(1).ColorScaleCriteria(1).Type = _
+        xlConditionValueNumber
+    Selection.FormatConditions(1).ColorScaleCriteria(1).Value = 0.8
+    With Selection.FormatConditions(1).ColorScaleCriteria(1).FormatColor
+        .Color = 255
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).ColorScaleCriteria(2).Type = _
+        xlConditionValueNumber
+    Selection.FormatConditions(1).ColorScaleCriteria(2).Value = 0.85
+    With Selection.FormatConditions(1).ColorScaleCriteria(2).FormatColor
+        .Color = 65535
+        .TintAndShade = 0
+    End With
+    Selection.FormatConditions(1).ColorScaleCriteria(3).Type = _
+        xlConditionValueNumber
+    Selection.FormatConditions(1).ColorScaleCriteria(3).Value = 1
+    With Selection.FormatConditions(1).ColorScaleCriteria(3).FormatColor
+        .Color = 5287936
+        .TintAndShade = 0
+    End With
+    
+    Range("O1:P1").Select
+    Selection.Font.Size = 12
+    Selection.Font.Size = 14
+    Cells.Select
+    Cells.EntireColumn.AutoFit
+    
+    Cells.Select
+    Selection.Copy
+    Workbooks.Add
+    
+    Dim wkb_result As Workbook
+    Set wkb_result = ActiveWorkbook
+    Dim sht_result As Worksheet
+    Set sht_result = wkb_result.Sheets("Sheet1")
+    
+    
+    sht_result.Paste
+    sht_result.Select
+    
+    wkb.Activate
+    Cells.Select
+    Application.CutCopyMode = False
+    Selection.Clear
+    wkb_result.Activate
+    
+    Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
+End Sub
