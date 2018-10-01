@@ -1,0 +1,114 @@
+Sub BOM_Compare()
+
+'*************************************************************************
+'     Developer : Susmith Barigidad
+'     Department : Lam India Analytics
+'
+'*************************************************************************
+Dim LR As Integer, j As Long, k As String
+
+LR = Sheets("Autoformat").Range("E" & Rows.Count).End(xlUp).Row
+'Rng = "I1:I" & LR
+'LR1 = LR - Excel.WorksheetFunction.CountBlank(ActiveSheet.Range(Rng))
+'LR = 98
+For j = LR To 2 Step -1
+ Dif = Range("I" & j).Value
+ If InStr(1, Dif, "diff") > 0 Then
+ k = Left(Range("D" & j).Value, 10)
+ If InStr(1, k, "-") > 0 Then
+ Call Swapping(k, j)
+ End If
+ End If
+Next j
+Call BOM_Compare2
+
+End Sub
+
+Function Swapping(Part As String, j As Long)
+
+'MsgBox ("Part number :" & Part)
+' Going Upwards to get immediate 848
+For k = j To 2 Step -1
+If Range("M" & k).Interior.Color = RGB(141, 180, 226) Then
+s1 = k
+Exit For
+End If
+Next k
+
+'going downwards to get the next 848- postion
+R = 1064
+For v = j To R Step 1
+If v > Sheets("Autoformat").Range("E" & Rows.Count).End(xlUp).Row Then
+Exit For
+If Range("M" & v).Interior.Color = RGB(141, 180, 226) Then
+
+Exit For
+End If
+End If
+Next v
+'MsgBox ("Starting" & k & "Ending" & v)
+For i = v - 1 To k Step -1
+p1 = Range("M" & i).Value
+If InStr(1, p1, Part) > 0 Then
+Rng = "M" & j & ":" & "Q" & j
+temp = Range(Rng).Value
+Rngp = "M" & i & ":" & "Q" & i
+tempp = Range(Rngp).Value
+Range(Rngp).Value = temp
+Range(Rng).Value = tempp
+Exit For
+End If
+
+Next i
+End Function
+Sub BOM_Compare2()
+
+Dim LR As Integer, j As Long, k As String
+
+LR = Sheets("Autoformat").Range("I" & Rows.Count).End(xlUp).Row
+'Rng = "I1:I" & LR
+'LR1 = LR - Excel.WorksheetFunction.CountBlank(ActiveSheet.Range(Rng))
+LR = 98
+For j = LR To 2 Step -1
+ Dif = Range("I" & j).Value
+ If InStr(1, Dif, "diff") > 0 Then
+ k = Left(Range("D" & j).Value, 14)
+ If InStr(1, k, "-") > 0 Then
+ Call Swapping(k, j)
+ End If
+ End If
+Next j
+
+'Refreshing the diff
+    Sheets("AutoFormat").Select
+    Range("I4").Select
+    Selection.AutoFill Destination:=Range("I4:I1064")
+    Range("I4:I1064").Select
+    Range("J4").Select
+    Selection.AutoFill Destination:=Range("J4:J1064")
+    Range("J4:J1064").Select
+    Range("K10").Select
+
+End Sub
+
+Sub Trial()
+
+'we have got the starting position and ending position of 848
+k = 89
+v = 99
+j = 96
+Part = "727-001779"
+For i = v - 1 To k Step -1
+p1 = Range("M" & i).Value
+If InStr(1, p1, Part) > 0 Then
+Rng = "M" & j & ":" & "Q" & j
+temp = Range(Rng).Value
+Rngp = "M" & i & ":" & "Q" & i
+tempp = Range(Rngp).Value
+Range(Rngp).Value = temp
+Range(Rng).Value = tempp
+Exit For
+End If
+
+Next i
+End Sub
